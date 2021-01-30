@@ -25,6 +25,34 @@ void AAgent::BeginPlay()
 void AAgent::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	dt = DeltaTime;
 }
 
+
+// Moves actor to location using obstacle avoidance
+void AAgent::MoveToLocation() 
+{
+	// Get direction to point
+	FVector direction = locationToMoveTo - GetActorLocation();
+	direction.Normalize();
+
+	// Move to direction at given speed
+	AddActorWorldOffset(direction * agentSpeed * dt);
+}
+
+
+// Checks if agent is close enough to location to regenerate location
+bool AAgent::CheckIfLocationNeedsToBeUpdated() 
+{
+	float distance = FVector::Distance(GetActorLocation(), locationToMoveTo);
+	return distance <= distanceBeforeNewLocation;
+}
+
+
+// Makes random new location
+void AAgent::GenerateNewLocation() 
+{
+	locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
+		                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
+		                       GetActorLocation().Z);
+}
