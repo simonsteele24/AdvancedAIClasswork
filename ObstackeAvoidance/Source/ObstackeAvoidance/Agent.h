@@ -28,7 +28,6 @@ public:
 	UPROPERTY(EditAnywhere) FVector minCornerForPointGen;
 	UPROPERTY(EditAnywhere) FVector maxCornerForPointGen;
 	UPROPERTY(EditAnywhere) float distanceBeforeNewLocation;
-	UPROPERTY(EditAnywhere) float agentSpeed;
 
 protected:
 	// Called when the game starts or when spawned
@@ -39,6 +38,18 @@ protected:
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
+
+	// Private Functions
+	UFUNCTION() FVector Seek();
+
+	FVector Position = FVector(0, 0, 0);
+
+	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float MaxSpeed = 700.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float DragForce = -0.8f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekStrength = 900.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekDecelerationDistance = 1200.0f;
 
 public:	
 	// Called every frame

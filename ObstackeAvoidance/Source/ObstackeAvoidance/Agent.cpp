@@ -2,6 +2,7 @@
 
 #include "Agent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AAgent::AAgent()
@@ -32,12 +33,24 @@ void AAgent::Tick(float DeltaTime)
 // Moves actor to location using obstacle avoidance
 void AAgent::MoveToLocation() 
 {
-	// Get direction to point
-	FVector direction = locationToMoveTo - GetActorLocation();
-	direction.Normalize();
+	// steering
+	SteeringVelocity += (SteeringVelocity * DragForce * dt);
+	SteeringVelocity += (Seek() * SeekStrength * dt);
 
-	// Move to direction at given speed
-	AddActorWorldOffset(direction * agentSpeed * dt);
+	// limit Speed
+	if (SteeringVelocity.Size() > MaxSpeed)
+	{
+		SteeringVelocity = SteeringVelocity.GetSafeNormal() * MaxSpeed;
+	}
+
+	// movement
+	Position += (SteeringVelocity * dt);
+	SetActorLocation(Position, true);
+	Position = GetActorLocation();
+
+	// orientation 
+	FRotator PlayerRot = UKismetMathLibrary::FindLookAtRotation(Position, Position + SteeringVelocity);
+	SetActorRotation(PlayerRot);
 }
 
 
@@ -55,4 +68,17 @@ void AAgent::GenerateNewLocation()
 	locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
 		                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
 		                       GetActorLocation().Z);
+}
+
+FVector AAgent::Seek()
+{
+	FVector dir = locationToMoveTo - Position;
+	float distance = dir.Size();
+	dir.Z = 0; // consider only 2d plane
+	dir.Normalize();
+
+	const float maxSpeedDistance = 500.0f;
+	float speedRatio = FMath::Clamp(distance / SeekDecelerationDistance, 0.0f, 1.0f);
+
+	return dir * speedRatio;
 }
