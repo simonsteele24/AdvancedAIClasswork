@@ -25,6 +25,7 @@ public:
 	UFUNCTION(BlueprintCallable) bool CheckIfLocationNeedsToBeUpdated();
 	UFUNCTION(BlueprintCallable) void GenerateNewLocation();
 	UFUNCTION(BlueprintCallable) void MoveIndicatorToTargetLocation();
+	UFUNCTION(BlueprintCallable) bool ConeCheck();
 
 	// Public vars
 	UPROPERTY(EditAnywhere) FVector minCornerForPointGen;
@@ -44,6 +45,7 @@ protected:
 
 	// Private Functions
 	UFUNCTION() FVector Seek();
+	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
 
 	FVector Position = FVector(0, 0, 0);
 
@@ -53,6 +55,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float DragForce = -0.8f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekStrength = 900.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekDecelerationDistance = 1200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneThreshold = 30.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;
 
 public:	
 	// Called every frame

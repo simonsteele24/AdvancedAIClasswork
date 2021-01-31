@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Agent.h"
+#include "Obstacle.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/ArrowComponent.h"
 #include "LocationIndicator.h"
+#include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AAgent::AAgent()
@@ -37,6 +40,7 @@ void AAgent::Tick(float DeltaTime)
 // Moves actor to location using obstacle avoidance
 void AAgent::MoveToLocation() 
 {
+
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Seek() * SeekStrength * dt);
@@ -94,4 +98,43 @@ FVector AAgent::Seek()
 void AAgent::MoveIndicatorToTargetLocation() 
 {
 	locationIndicator->SetActorLocation(locationToMoveTo);
+}
+
+
+// Check if any objects are in range for avoidance
+bool AAgent::ConeCheck() 
+{
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), FColor::Green,false,-1.0f,(uint8)'\000',10.0f);
+	//DrawDebugLine(GetWorld(), GetActorLocation(), RotatePointAroundActor(coneThreshold, coneDistance), FColor::Green, false, -1.0f, (uint8)'\000', 10.0f);
+	//DrawDebugLine(GetWorld(), GetActorLocation(), RotatePointAroundActor(coneThreshold, -coneDistance), FColor::Green, false, -1.0f, (uint8)'\000', 10.0f);
+
+	TArray <AActor*> result;
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AObstacle::StaticClass(), result);
+
+	FVector distance = FVector(0, 0, 0);
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		distance = result[i]->GetActorLocation() - GetActorLocation();
+
+		if (FVector::DotProduct(distance, GetActorForwardVector()) > UKismetMathLibrary::DegCos(coneThreshold)) 
+		{
+			if (FVector::Distance(result[i]->GetActorLocation(), GetActorLocation()) <= coneDistance) 
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+// Rotates point by given angle and distance around actor
+FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoint) 
+{
+	FRotator rotation = GetActorRotation() + FRotator(0, 0, amountToRotate);
+
+	return GetActorLocation() + (UKismetMathLibrary::GetForwardVector(rotation) * distanceOfPoint);
 }
