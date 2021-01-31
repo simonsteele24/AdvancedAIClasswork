@@ -13,6 +13,7 @@ class OBSTACKEAVOIDANCE_API AAgent : public AActor
 	
 	/* Components */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UStaticMeshComponent* agentBody;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UArrowComponent* directionArrow;
 
 
 public:	
@@ -23,11 +24,13 @@ public:
 	UFUNCTION(BlueprintCallable) void MoveToLocation();
 	UFUNCTION(BlueprintCallable) bool CheckIfLocationNeedsToBeUpdated();
 	UFUNCTION(BlueprintCallable) void GenerateNewLocation();
+	UFUNCTION(BlueprintCallable) void MoveIndicatorToTargetLocation();
 
 	// Public vars
 	UPROPERTY(EditAnywhere) FVector minCornerForPointGen;
 	UPROPERTY(EditAnywhere) FVector maxCornerForPointGen;
 	UPROPERTY(EditAnywhere) float distanceBeforeNewLocation;
+	UPROPERTY(EditAnywhere) class ALocationIndicator* locationIndicator;
 
 protected:
 	// Called when the game starts or when spawned

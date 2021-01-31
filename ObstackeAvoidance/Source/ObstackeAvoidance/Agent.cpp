@@ -3,6 +3,8 @@
 #include "Agent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/ArrowComponent.h"
+#include "LocationIndicator.h"
 
 // Sets default values
 AAgent::AAgent()
@@ -13,6 +15,8 @@ AAgent::AAgent()
 	agentBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	agentBody->SetupAttachment(RootComponent);
 
+	directionArrow = CreateAbstractDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	directionArrow->SetupAttachment(agentBody);
 }
 
 // Called when the game starts or when spawned
@@ -70,6 +74,8 @@ void AAgent::GenerateNewLocation()
 		                       GetActorLocation().Z);
 }
 
+
+// Does the seek steering behavior
 FVector AAgent::Seek()
 {
 	FVector dir = locationToMoveTo - Position;
@@ -81,4 +87,11 @@ FVector AAgent::Seek()
 	float speedRatio = FMath::Clamp(distance / SeekDecelerationDistance, 0.0f, 1.0f);
 
 	return dir * speedRatio;
+}
+
+
+// Takes location indicator object and moves it to target location
+void AAgent::MoveIndicatorToTargetLocation() 
+{
+	locationIndicator->SetActorLocation(locationToMoveTo);
 }
