@@ -20,6 +20,12 @@ AAgent::AAgent()
 
 	directionArrow = CreateAbstractDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	directionArrow->SetupAttachment(agentBody);
+
+	leftRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("LeftRaycast"));
+	leftRaycast->SetupAttachment(agentBody);
+
+	rightRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("RightRaycast"));
+	rightRaycast->SetupAttachment(agentBody);
 }
 
 // Called when the game starts or when spawned
@@ -43,7 +49,8 @@ void AAgent::MoveToLocation()
 
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
-	SteeringVelocity += (Seek() * SeekStrength * dt);
+	SteeringVelocity += (Seek(target) * SeekStrength * dt);
+	SteeringVelocity += (Avoid() * avoidStrength * dt);
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -66,23 +73,35 @@ void AAgent::MoveToLocation()
 bool AAgent::CheckIfLocationNeedsToBeUpdated() 
 {
 	float distance = FVector::Distance(GetActorLocation(), locationToMoveTo);
-	return distance <= distanceBeforeNewLocation;
+
+	bool isThere = distance <= distanceBeforeNewLocation;
+
+	if (isThere && target != locationToMoveTo) 
+	{
+		target = locationToMoveTo;
+	}
+
+	return isThere;
 }
 
 
 // Makes random new location
 void AAgent::GenerateNewLocation() 
 {
-	locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
-		                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
-		                       GetActorLocation().Z);
+	//locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
+	//	                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
+	//	                       GetActorLocation().Z);
+	locationToMoveTo = FVector(locationIndicator->GetActorLocation());
+	locationToMoveTo.Z = GetActorLocation().Z;
+
+	target = locationToMoveTo;
 }
 
 
 // Does the seek steering behavior
-FVector AAgent::Seek()
+FVector AAgent::Seek(FVector location)
 {
-	FVector dir = locationToMoveTo - Position;
+	FVector dir = location - Position;
 	float distance = dir.Size();
 	dir.Z = 0; // consider only 2d plane
 	dir.Normalize();
@@ -91,6 +110,37 @@ FVector AAgent::Seek()
 	float speedRatio = FMath::Clamp(distance / SeekDecelerationDistance, 0.0f, 1.0f);
 
 	return dir * speedRatio;
+}
+
+
+// Does the obstacle avoidance behavior
+FVector AAgent::Avoid() 
+{
+	FHitResult hit;
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+
+	if (hit.bBlockingHit)
+	{
+		return FVector(hit.ImpactNormal.X, hit.ImpactNormal.Y, GetActorLocation().Z) * avoidDistance;
+	}
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+
+	if (hit.bBlockingHit)
+	{
+		return FVector(hit.ImpactNormal.X, hit.ImpactNormal.Y, GetActorLocation().Z) * avoidDistance;
+	}
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+
+	if (hit.bBlockingHit) 
+	{
+		return FVector(hit.ImpactNormal.X,hit.ImpactNormal.Y,GetActorLocation().Z) * avoidDistance;
+	}
+
+
+
+	return FVector(0, 0, 0);
 }
 
 

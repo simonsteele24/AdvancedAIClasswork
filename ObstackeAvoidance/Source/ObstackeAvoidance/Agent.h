@@ -14,6 +14,8 @@ class OBSTACKEAVOIDANCE_API AAgent : public AActor
 	/* Components */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UStaticMeshComponent* agentBody;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UArrowComponent* directionArrow;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* leftRaycast;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* rightRaycast;
 
 
 public:	
@@ -42,9 +44,11 @@ protected:
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
+	UPROPERTY() FVector target;
 
 	// Private Functions
-	UFUNCTION() FVector Seek();
+	UFUNCTION() FVector Seek(FVector location);
+	UFUNCTION() FVector Avoid();
 	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
 
 	FVector Position = FVector(0, 0, 0);
@@ -58,6 +62,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneThreshold = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidStrength = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidDistance = 50.0f;
 
 public:	
 	// Called every frame
