@@ -128,11 +128,8 @@ FVector AAgent::Avoid()
 
 	if (hit.bBlockingHit)
 	{
-		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
-		avoidanceForce.Normalize();
-		avoidanceForce *= avoidDistance;
 		bObjectInWay = true;
-		return avoidanceForce;
+		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
 	}
 
 
@@ -141,22 +138,16 @@ FVector AAgent::Avoid()
 
 	if (hit.bBlockingHit)
 	{
-		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
-		avoidanceForce.Normalize();
-		avoidanceForce *= avoidDistance;
 		bObjectInWay = true;
-		return avoidanceForce;
+		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
 	}
 
 	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 
 	if (hit.bBlockingHit)
 	{
-		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
-		avoidanceForce.Normalize();
-		avoidanceForce *= avoidDistance;
 		bObjectInWay = true;
-		return avoidanceForce;
+		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
 	}
 
 
