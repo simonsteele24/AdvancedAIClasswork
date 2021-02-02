@@ -49,8 +49,23 @@ void AAgent::MoveToLocation()
 
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
-	SteeringVelocity += (Seek(target) * SeekStrength * dt);
-	SteeringVelocity += (Avoid() * avoidStrength * dt);
+	SteeringVelocity += (Seek(locationToMoveTo) * SeekStrength * dt);
+
+	Avoid();
+
+	if (bObjectInWay) 
+	{
+		SteeringVelocity += (Avoid() * avoidStrength * dt);
+	}
+
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Seek(locationToMoveTo) * SeekStrength), FColor::Red, false, -0.1f, (uint8)'\000', 10.0f);
+
+	if (bObjectInWay) 
+	{
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Red, false, -0.1f, (uint8)'\000', 10.0f);
+	}
+
+	Avoid();
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -76,11 +91,6 @@ bool AAgent::CheckIfLocationNeedsToBeUpdated()
 
 	bool isThere = distance <= distanceBeforeNewLocation;
 
-	if (isThere && target != locationToMoveTo) 
-	{
-		target = locationToMoveTo;
-	}
-
 	return isThere;
 }
 
@@ -88,13 +98,9 @@ bool AAgent::CheckIfLocationNeedsToBeUpdated()
 // Makes random new location
 void AAgent::GenerateNewLocation() 
 {
-	//locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
-	//	                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
-	//	                       GetActorLocation().Z);
-	locationToMoveTo = FVector(locationIndicator->GetActorLocation());
-	locationToMoveTo.Z = GetActorLocation().Z;
-
-	target = locationToMoveTo;
+	locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
+		                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
+		                       GetActorLocation().Z);
 }
 
 
@@ -117,25 +123,40 @@ FVector AAgent::Seek(FVector location)
 FVector AAgent::Avoid() 
 {
 	FHitResult hit;
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 
 	if (hit.bBlockingHit)
 	{
-		return FVector(hit.ImpactNormal.X, hit.ImpactNormal.Y, GetActorLocation().Z) * avoidDistance;
+		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
+		avoidanceForce.Normalize();
+		avoidanceForce *= avoidDistance;
+		bObjectInWay = true;
+		return avoidanceForce;
+	}
+
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+	bObjectInWay = false;
+
+	if (hit.bBlockingHit)
+	{
+		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
+		avoidanceForce.Normalize();
+		avoidanceForce *= avoidDistance;
+		bObjectInWay = true;
+		return avoidanceForce;
 	}
 
 	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 
 	if (hit.bBlockingHit)
 	{
-		return FVector(hit.ImpactNormal.X, hit.ImpactNormal.Y, GetActorLocation().Z) * avoidDistance;
-	}
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
-
-	if (hit.bBlockingHit) 
-	{
-		return FVector(hit.ImpactNormal.X,hit.ImpactNormal.Y,GetActorLocation().Z) * avoidDistance;
+		FVector avoidanceForce = hit.Location - hit.Actor->GetActorLocation();
+		avoidanceForce.Normalize();
+		avoidanceForce *= avoidDistance;
+		bObjectInWay = true;
+		return avoidanceForce;
 	}
 
 

@@ -41,10 +41,10 @@ protected:
 
 	// Floats
 	UPROPERTY() float dt;
+	UPROPERTY() bool bObjectInWay;
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
-	UPROPERTY() FVector target;
 
 	// Private Functions
 	UFUNCTION() FVector Seek(FVector location);
