@@ -35,6 +35,8 @@ public:
 	UPROPERTY(EditAnywhere) float distanceBeforeNewLocation;
 	UPROPERTY(EditAnywhere) class ALocationIndicator* locationIndicator;
 
+	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -49,11 +51,12 @@ protected:
 	// Private Functions
 	UFUNCTION() FVector Seek(FVector location);
 	UFUNCTION() FVector Avoid();
+	UFUNCTION() FVector AvoidAgents();
 	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
 
 	FVector Position = FVector(0, 0, 0);
 
-	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float MaxSpeed = 700.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float DragForce = -0.8f;
@@ -64,6 +67,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidStrength = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidDistance = 50.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AgentAvoidance") float agentAvoidanceStrength = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AgentAvoidance") float agentCollisionRadius = 100.0f;
 
 public:	
 	// Called every frame

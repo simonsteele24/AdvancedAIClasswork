@@ -32,7 +32,7 @@ AAgent::AAgent()
 void AAgent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Position = GetActorLocation();
 }
 
 // Called every frame
@@ -50,8 +50,11 @@ void AAgent::MoveToLocation()
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Seek(locationToMoveTo) * SeekStrength * dt);
+	SteeringVelocity += (AvoidAgents() * agentAvoidanceStrength * dt);
 
 	Avoid();
+
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (AvoidAgents() * agentAvoidanceStrength), FColor::Yellow, false, -0.1f, (uint8)'\000', 10.0f);
 
 	if (bObjectInWay) 
 	{
@@ -62,7 +65,7 @@ void AAgent::MoveToLocation()
 
 	if (bObjectInWay) 
 	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Red, false, -0.1f, (uint8)'\000', 10.0f);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Blue, false, -0.1f, (uint8)'\000', 10.0f);
 	}
 
 	Avoid();
@@ -126,28 +129,38 @@ FVector AAgent::Avoid()
 
 	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 
-	if (hit.bBlockingHit)
-	{
-		bObjectInWay = true;
-		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
-	}
-
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 	bObjectInWay = false;
 
 	if (hit.bBlockingHit)
 	{
-		bObjectInWay = true;
-		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		if (!Cast<AAgent>(hit.Actor)) 
+		{
+			bObjectInWay = true;
+			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		}
+	}
+
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+
+	if (hit.bBlockingHit)
+	{
+		if (!Cast<AAgent>(hit.Actor))
+		{
+			bObjectInWay = true;
+			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		}
 	}
 
 	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
 
 	if (hit.bBlockingHit)
 	{
-		bObjectInWay = true;
-		return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		if (!Cast<AAgent>(hit.Actor))
+		{
+			bObjectInWay = true;
+			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		}
 	}
 
 
@@ -199,4 +212,68 @@ FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoi
 	FRotator rotation = GetActorRotation() + FRotator(0, 0, amountToRotate);
 
 	return GetActorLocation() + (UKismetMathLibrary::GetForwardVector(rotation) * distanceOfPoint);
+}
+
+
+// Avoids all agents
+FVector AAgent::AvoidAgents() 
+{
+	TArray<AActor*> result;
+
+	float shortestTime = 99999999999.0f;
+	AAgent* firstTarget = nullptr;
+	float firstMinSeperation = 0.0f;
+	float firstDistance = 0.0f;
+	FVector firstRelativePosition = FVector(0,0,0);
+	FVector firstRelativeVelocity = FVector(0,0,0);
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		if (result[i] != this) 
+		{
+			FVector relativePosition =  GetActorLocation() - result[i]->GetActorLocation();
+			FVector relativeVelocity = SteeringVelocity - Cast<AAgent>(result[i])->SteeringVelocity;
+			float relativeSpeed = relativeVelocity.Size();
+			float timeToCollision = ((FVector::DotProduct(relativePosition, relativeVelocity)) / (relativeSpeed * relativeSpeed));
+			float distance = relativePosition.Size();
+			float minSeperation = distance - relativeSpeed * timeToCollision;
+			
+			if (minSeperation > 2 * agentCollisionRadius)
+			{
+				continue;
+			}
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Time to collision: ") + FString::SanitizeFloat(timeToCollision));
+			if (timeToCollision > 0 && timeToCollision < shortestTime)
+			{
+				shortestTime = timeToCollision;
+				firstTarget = Cast<AAgent>(result[i]);
+				firstMinSeperation = minSeperation;
+				firstDistance = distance;
+				firstRelativePosition = relativePosition;
+				firstRelativeVelocity = relativeVelocity;
+			}
+		}
+	}
+
+	if (firstTarget == nullptr) 
+	{
+		return FVector(0, 0, 0);
+	}
+
+	FVector relativePos;
+
+	if (firstMinSeperation <= 0 || firstDistance < 2 * agentCollisionRadius) 
+	{
+		relativePos = GetActorLocation() - firstTarget->GetActorLocation();
+	}
+	else 
+	{
+		relativePos = firstRelativePosition + firstRelativeVelocity * shortestTime;
+	}
+
+	relativePos.Normalize();
+
+	return relativePos * 500.0f;
 }
