@@ -219,8 +219,26 @@ FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoi
 FVector AAgent::AvoidAgents() 
 {
 	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
 
-	float shortestTime = 99999999999.0f;
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		if (result[i] != this) 
+		{
+			FVector direction = GetActorLocation() - result[i]->GetActorLocation();
+
+			if (direction.Size() <= agentCollisionRadius) 
+			{
+				direction.Normalize();
+				return direction;
+			}
+		}
+	}
+
+	return FVector(0,0,0);
+
+	/*float shortestTime = 99999999999.0f;
 	AAgent* firstTarget = nullptr;
 	float firstMinSeperation = 0.0f;
 	float firstDistance = 0.0f;
@@ -275,5 +293,5 @@ FVector AAgent::AvoidAgents()
 
 	relativePos.Normalize();
 
-	return relativePos * 500.0f;
+	return relativePos * 500.0f;*/
 }
