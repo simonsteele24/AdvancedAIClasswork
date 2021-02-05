@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "LocationIndicator.h"
 #include "DrawDebugHelpers.h"
+#include "WanderPointer.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -42,6 +43,8 @@ void AAgent::BeginPlay()
 {
 	Super::BeginPlay();
 	Position = GetActorLocation();
+	startTime = GetGameTimeSinceCreation();
+	ChangeWanderDirection();
 }
 
 // Called every frame
@@ -55,10 +58,17 @@ void AAgent::Tick(float DeltaTime)
 // Moves actor to location using obstacle avoidance
 void AAgent::MoveToLocation() 
 {
+	if (GetGameTimeSinceCreation() - startTime > timeOfWander) 
+	{
+		ChangeWanderDirection();
+		startTime = GetGameTimeSinceCreation();
+	}
 
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
-	SteeringVelocity += (Seek(locationToMoveTo) * SeekStrength * dt);
+	SteeringVelocity += (Wander() * wanderStrength * dt);
+
+	/*SteeringVelocity += (Seek(locationToMoveTo) * SeekStrength * dt);
 	SteeringVelocity += (AvoidAgents() * agentAvoidanceStrength * dt);
 
 	Avoid();
@@ -77,7 +87,7 @@ void AAgent::MoveToLocation()
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Blue, false, -0.1f, (uint8)'\000', 10.0f);
 	}
 
-	Avoid();
+	Avoid();*/
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -221,6 +231,21 @@ FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoi
 	FRotator rotation = GetActorRotation() + FRotator(0, 0, amountToRotate);
 
 	return GetActorLocation() + (UKismetMathLibrary::GetForwardVector(rotation) * distanceOfPoint);
+}
+
+
+// Wander Steering Behavior
+FVector AAgent::Wander() 
+{
+	return Seek(wanderPointer->GetActorLocation());
+}
+
+
+
+// Updated after certain time
+void AAgent::ChangeWanderDirection() 
+{
+	wanderOrientation += UKismetMathLibrary::RandomFloatInRange(-1.0f, 1.0f) * wanderRate;
 }
 
 

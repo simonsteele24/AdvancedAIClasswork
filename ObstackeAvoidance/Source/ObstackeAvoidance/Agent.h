@@ -36,6 +36,7 @@ public:
 	UPROPERTY(EditAnywhere) FVector maxCornerForPointGen;
 	UPROPERTY(EditAnywhere) float distanceBeforeNewLocation;
 	UPROPERTY(EditAnywhere) class ALocationIndicator* locationIndicator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) class AWanderPointer* wanderPointer;
 
 	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
 	UPROPERTY(BlueprintReadOnly) int numOfCollisions = 0;
@@ -48,11 +49,17 @@ protected:
 	UPROPERTY() float dt;
 	UPROPERTY() bool bObjectInWay;
 	UPROPERTY() int numOfOverlaps = 0;
+	UPROPERTY() float wanderOffset = 0.0f;
+	UPROPERTY() float wanderRadius = 0.0f;
+	UPROPERTY(BlueprintReadWrite) float wanderOrientation = 0.0f;
+	UPROPERTY() float startTime = 0.0f;
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
 
 	// Private Functions
+	UFUNCTION() FVector Wander();
+	UFUNCTION() void ChangeWanderDirection();
 	UFUNCTION() FVector Seek(FVector location);
 	UFUNCTION() FVector Avoid();
 	UFUNCTION() FVector AvoidAgents();
@@ -60,7 +67,11 @@ protected:
 
 	FVector Position = FVector(0, 0, 0);
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wander") float wanderStrength = 900.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wander") float wanderRate = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wander") float circleOffset = 1.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wander") float timeOfWander = 1.0f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float MaxSpeed = 700.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float DragForce = -0.8f;
