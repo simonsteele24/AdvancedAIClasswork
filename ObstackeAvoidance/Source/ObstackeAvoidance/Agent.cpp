@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/ArrowComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "LocationIndicator.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
@@ -15,17 +16,26 @@ AAgent::AAgent()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Agent body component
 	agentBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	agentBody->SetupAttachment(RootComponent);
 
+	// Arrow to show direction
 	directionArrow = CreateAbstractDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 	directionArrow->SetupAttachment(agentBody);
 
+	// Collision detection raycast on left
 	leftRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("LeftRaycast"));
 	leftRaycast->SetupAttachment(agentBody);
 
+	// Collision detection raycast on right
 	rightRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("RightRaycast"));
 	rightRaycast->SetupAttachment(agentBody);
+
+	// Capsule collision to check for collisions
+	capsuleCollision = CreateAbstractDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
+	capsuleCollision->SetupAttachment(agentBody);
+	capsuleCollision->OnComponentBeginOverlap.AddDynamic(this, &AAgent::OnCapsuleBeginOverlap);
 }
 
 // Called when the game starts or when spawned
@@ -212,6 +222,13 @@ FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoi
 	FRotator rotation = GetActorRotation() + FRotator(0, 0, amountToRotate);
 
 	return GetActorLocation() + (UKismetMathLibrary::GetForwardVector(rotation) * distanceOfPoint);
+}
+
+
+// Called whenever on overlap
+void AAgent::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) 
+{
+	numOfCollisions++;
 }
 
 

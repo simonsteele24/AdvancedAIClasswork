@@ -16,6 +16,7 @@ class OBSTACKEAVOIDANCE_API AAgent : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UArrowComponent* directionArrow;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* leftRaycast;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* rightRaycast;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UCapsuleComponent* capsuleCollision;
 
 
 public:	
@@ -36,6 +37,10 @@ public:
 	UPROPERTY(EditAnywhere) class ALocationIndicator* locationIndicator;
 
 	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
+	UPROPERTY(BlueprintReadOnly) int numOfCollisions = 0;
+
+	UFUNCTION()
+	void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 protected:
 	// Called when the game starts or when spawned
