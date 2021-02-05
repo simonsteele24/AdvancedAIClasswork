@@ -35,7 +35,6 @@ AAgent::AAgent()
 	// Capsule collision to check for collisions
 	capsuleCollision = CreateAbstractDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
 	capsuleCollision->SetupAttachment(agentBody);
-	capsuleCollision->OnComponentBeginOverlap.AddDynamic(this, &AAgent::OnCapsuleBeginOverlap);
 }
 
 // Called when the game starts or when spawned
@@ -225,10 +224,30 @@ FVector AAgent::RotatePointAroundActor(float amountToRotate, float distanceOfPoi
 }
 
 
-// Called whenever on overlap
-void AAgent::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) 
+// Check if collision score needs to be updated based on the number of overlaps on capsule component
+void AAgent::UpdateCollisionScore() 
 {
-	numOfCollisions++;
+	TArray<AActor*> result;
+	TArray<AActor*> newResult;
+	capsuleCollision->GetOverlappingActors(result);
+	newResult.Empty();
+
+	// Take out self from overlapping actor list
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		if (result[i] != this) 
+		{
+			newResult.Add(result[i]);
+		}
+	}
+
+
+	if (numOfOverlaps != newResult.Num() && newResult.Num() > numOfOverlaps) 
+	{
+		numOfCollisions++;
+	}
+
+	numOfOverlaps = newResult.Num();
 }
 
 

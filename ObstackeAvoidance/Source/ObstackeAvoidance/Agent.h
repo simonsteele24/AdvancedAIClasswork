@@ -29,6 +29,7 @@ public:
 	UFUNCTION(BlueprintCallable) void GenerateNewLocation();
 	UFUNCTION(BlueprintCallable) void MoveIndicatorToTargetLocation();
 	UFUNCTION(BlueprintCallable) bool ConeCheck();
+	UFUNCTION(BlueprintCallable) void UpdateCollisionScore();
 
 	// Public vars
 	UPROPERTY(EditAnywhere) FVector minCornerForPointGen;
@@ -39,9 +40,6 @@ public:
 	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
 	UPROPERTY(BlueprintReadOnly) int numOfCollisions = 0;
 
-	UFUNCTION()
-	void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -49,6 +47,7 @@ protected:
 	// Floats
 	UPROPERTY() float dt;
 	UPROPERTY() bool bObjectInWay;
+	UPROPERTY() int numOfOverlaps = 0;
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
