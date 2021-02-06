@@ -25,17 +25,9 @@ public:
 
 	// Functions
 	UFUNCTION(BlueprintCallable) void MoveToLocation();
-	UFUNCTION(BlueprintCallable) bool CheckIfLocationNeedsToBeUpdated();
-	UFUNCTION(BlueprintCallable) void GenerateNewLocation();
-	UFUNCTION(BlueprintCallable) void MoveIndicatorToTargetLocation();
 	UFUNCTION(BlueprintCallable) bool ConeCheck();
 	UFUNCTION(BlueprintCallable) void UpdateCollisionScore();
 
-	// Public vars
-	UPROPERTY(EditAnywhere) FVector minCornerForPointGen;
-	UPROPERTY(EditAnywhere) FVector maxCornerForPointGen;
-	UPROPERTY(EditAnywhere) float distanceBeforeNewLocation;
-	UPROPERTY(EditAnywhere) class ALocationIndicator* locationIndicator;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) class AWanderPointer* wanderPointer;
 
 	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);

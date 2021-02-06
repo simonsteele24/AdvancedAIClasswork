@@ -67,8 +67,6 @@ void AAgent::MoveToLocation()
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Wander() * wanderStrength * dt);
-
-	/*SteeringVelocity += (Seek(locationToMoveTo) * SeekStrength * dt);
 	SteeringVelocity += (AvoidAgents() * agentAvoidanceStrength * dt);
 
 	Avoid();
@@ -80,14 +78,12 @@ void AAgent::MoveToLocation()
 		SteeringVelocity += (Avoid() * avoidStrength * dt);
 	}
 
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Seek(locationToMoveTo) * SeekStrength), FColor::Red, false, -0.1f, (uint8)'\000', 10.0f);
-
 	if (bObjectInWay) 
 	{
 		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Blue, false, -0.1f, (uint8)'\000', 10.0f);
 	}
 
-	Avoid();*/
+	Avoid();
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -103,26 +99,6 @@ void AAgent::MoveToLocation()
 	// orientation 
 	FRotator PlayerRot = UKismetMathLibrary::FindLookAtRotation(Position, Position + SteeringVelocity);
 	SetActorRotation(PlayerRot);
-}
-
-
-// Checks if agent is close enough to location to regenerate location
-bool AAgent::CheckIfLocationNeedsToBeUpdated() 
-{
-	float distance = FVector::Distance(GetActorLocation(), locationToMoveTo);
-
-	bool isThere = distance <= distanceBeforeNewLocation;
-
-	return isThere;
-}
-
-
-// Makes random new location
-void AAgent::GenerateNewLocation() 
-{
-	locationToMoveTo = FVector(FMath::FRandRange(minCornerForPointGen.X, maxCornerForPointGen.X),
-		                       FMath::FRandRange(minCornerForPointGen.Y, maxCornerForPointGen.Y),
-		                       GetActorLocation().Z);
 }
 
 
@@ -152,7 +128,7 @@ FVector AAgent::Avoid()
 
 	if (hit.bBlockingHit)
 	{
-		if (!Cast<AAgent>(hit.Actor)) 
+		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor)) 
 		{
 			bObjectInWay = true;
 			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
@@ -164,7 +140,7 @@ FVector AAgent::Avoid()
 
 	if (hit.bBlockingHit)
 	{
-		if (!Cast<AAgent>(hit.Actor))
+		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
 		{
 			bObjectInWay = true;
 			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
@@ -175,7 +151,7 @@ FVector AAgent::Avoid()
 
 	if (hit.bBlockingHit)
 	{
-		if (!Cast<AAgent>(hit.Actor))
+		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
 		{
 			bObjectInWay = true;
 			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
@@ -185,13 +161,6 @@ FVector AAgent::Avoid()
 
 
 	return FVector(0, 0, 0);
-}
-
-
-// Takes location indicator object and moves it to target location
-void AAgent::MoveIndicatorToTargetLocation() 
-{
-	locationIndicator->SetActorLocation(locationToMoveTo);
 }
 
 
