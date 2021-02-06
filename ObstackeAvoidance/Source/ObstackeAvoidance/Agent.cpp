@@ -44,7 +44,7 @@ void AAgent::BeginPlay()
 	Super::BeginPlay();
 	Position = GetActorLocation();
 	startTime = GetGameTimeSinceCreation();
-	ChangeWanderDirection();
+	//ChangeWanderDirection();
 }
 
 // Called every frame
@@ -60,30 +60,22 @@ void AAgent::MoveToLocation()
 {
 	if (GetGameTimeSinceCreation() - startTime > timeOfWander) 
 	{
-		ChangeWanderDirection();
+		//ChangeWanderDirection();
 		startTime = GetGameTimeSinceCreation();
 	}
 
 	// steering
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
-	SteeringVelocity += (Wander() * wanderStrength * dt);
+	SteeringVelocity += (Seek(wanderPointer->GetActorLocation()) * SeekStrength * dt);
+	SteeringVelocity += (Seperate() * SeperationStrength * dt);
 	SteeringVelocity += (AvoidAgents() * agentAvoidanceStrength * dt);
 
 	Avoid();
-
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (AvoidAgents() * agentAvoidanceStrength), FColor::Yellow, false, -0.1f, (uint8)'\000', 10.0f);
 
 	if (bObjectInWay) 
 	{
 		SteeringVelocity += (Avoid() * avoidStrength * dt);
 	}
-
-	if (bObjectInWay) 
-	{
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (Avoid() * avoidStrength), FColor::Blue, false, -0.1f, (uint8)'\000', 10.0f);
-	}
-
-	Avoid();
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -114,6 +106,31 @@ FVector AAgent::Seek(FVector location)
 	float speedRatio = FMath::Clamp(distance / SeekDecelerationDistance, 0.0f, 1.0f);
 
 	return dir * speedRatio;
+}
+
+
+// Seperation Behaviour
+FVector AAgent::Seperate() 
+{
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+
+	FVector steer = FVector(0, 0, 0);
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		float dist = FVector::Distance(result[i]->GetActorLocation(), GetActorLocation());
+		if (dist < SeperationThreshold && result[i] != this) 
+		{
+			float strength = fmin(DecayCoefficient / (dist * dist), 500.0f);
+			FVector direction =  GetActorLocation() - result[i]->GetActorLocation();
+			direction.Normalize();
+
+			steer += direction * strength;
+		}
+	}
+
+	return steer;
 }
 
 

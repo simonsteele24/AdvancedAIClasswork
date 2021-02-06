@@ -54,6 +54,7 @@ protected:
 	UFUNCTION() void ChangeWanderDirection();
 	UFUNCTION() FVector Seek(FVector location);
 	UFUNCTION() FVector Avoid();
+	UFUNCTION() FVector Seperate();
 	UFUNCTION() FVector AvoidAgents();
 	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
 
@@ -69,6 +70,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float DragForce = -0.8f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekStrength = 900.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steering") float SeekDecelerationDistance = 1200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationStrength = 1000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationThreshold = 100.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float DecayCoefficient = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneThreshold = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;
