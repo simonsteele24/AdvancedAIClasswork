@@ -16,6 +16,8 @@ class OBSTACKEAVOIDANCE_API AAgent : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UArrowComponent* directionArrow;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* leftRaycast;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* rightRaycast;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* leftmostRaycast;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class USceneComponent* rightmostRaycast;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) class UCapsuleComponent* capsuleCollision;
 
 
@@ -73,10 +75,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationStrength = 1000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationThreshold = 100.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float DecayCoefficient = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneThreshold = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float endDistance = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidStrength = 500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float avoidDistance = 50.0f;
 

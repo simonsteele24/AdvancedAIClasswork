@@ -33,6 +33,14 @@ AAgent::AAgent()
 	rightRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("RightRaycast"));
 	rightRaycast->SetupAttachment(agentBody);
 
+	// Collision detection raycast on left
+	leftmostRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("LeftmostRaycast"));
+	leftmostRaycast->SetupAttachment(agentBody);
+
+	// Collision detection raycast on right
+	rightmostRaycast = CreateAbstractDefaultSubobject<USceneComponent>(TEXT("RightmostRaycast"));
+	rightmostRaycast->SetupAttachment(agentBody);
+
 	// Capsule collision to check for collisions
 	capsuleCollision = CreateAbstractDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
 	capsuleCollision->SetupAttachment(agentBody);
@@ -68,7 +76,6 @@ void AAgent::MoveToLocation()
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Seek(wanderPointer->GetActorLocation()) * SeekStrength * dt);
 	SteeringVelocity += (Seperate() * SeperationStrength * dt);
-	SteeringVelocity += (AvoidAgents() * agentAvoidanceStrength * dt);
 
 	Avoid();
 
@@ -122,7 +129,7 @@ FVector AAgent::Seperate()
 		float dist = FVector::Distance(result[i]->GetActorLocation(), GetActorLocation());
 		if (dist < SeperationThreshold && result[i] != this) 
 		{
-			float strength = fmin(DecayCoefficient / (dist * dist), 500.0f);
+			float strength = (SeperationThreshold - dist);
 			FVector direction =  GetActorLocation() - result[i]->GetActorLocation();
 			direction.Normalize();
 
@@ -139,7 +146,17 @@ FVector AAgent::Avoid()
 {
 	FHitResult hit;
 
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+	FCollisionQueryParams CollisionParams;
+
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+
+	for (int i = 0; i < result.Num(); i++)
+	{
+		CollisionParams.AddIgnoredActor(result[i]);
+	}
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
 
 	bObjectInWay = false;
 
@@ -153,7 +170,7 @@ FVector AAgent::Avoid()
 	}
 
 
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
 
 	if (hit.bBlockingHit)
 	{
@@ -164,7 +181,7 @@ FVector AAgent::Avoid()
 		}
 	}
 
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility);
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
 
 	if (hit.bBlockingHit)
 	{
@@ -175,7 +192,27 @@ FVector AAgent::Avoid()
 		}
 	}
 
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightmostRaycast->GetForwardVector() * endDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
 
+	if (hit.bBlockingHit)
+	{
+		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
+		{
+			bObjectInWay = true;
+			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		}
+	}
+
+	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftmostRaycast->GetForwardVector() * endDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
+
+	if (hit.bBlockingHit)
+	{
+		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
+		{
+			bObjectInWay = true;
+			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+		}
+	}
 
 	return FVector(0, 0, 0);
 }
