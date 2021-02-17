@@ -27,7 +27,6 @@ public:
 
 	// Functions
 	UFUNCTION(BlueprintCallable) void MoveToLocation();
-	UFUNCTION(BlueprintCallable) bool ConeCheck();
 	UFUNCTION(BlueprintCallable) void UpdateCollisionScore();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) class AWanderPointer* wanderPointer;
@@ -47,6 +46,7 @@ protected:
 	UPROPERTY() float wanderRadius = 0.0f;
 	UPROPERTY(BlueprintReadWrite) float wanderOrientation = 0.0f;
 	UPROPERTY() float startTime = 0.0f;
+	UPROPERTY() float actorDist = 0.0f;
 
 	// Vectors
 	UPROPERTY() FVector locationToMoveTo;
@@ -55,10 +55,11 @@ protected:
 	UFUNCTION() FVector Wander();
 	UFUNCTION() void ChangeWanderDirection();
 	UFUNCTION() FVector Seek(FVector location);
-	UFUNCTION() FVector Avoid();
+	UFUNCTION() FVector Avoid(TArray<AActor*> actorToCollideWith);
 	UFUNCTION() FVector Seperate();
 	UFUNCTION() FVector AvoidAgents();
 	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
+	UFUNCTION() TArray<AActor*> ConeCheck();
 
 	FVector Position = FVector(0, 0, 0);
 

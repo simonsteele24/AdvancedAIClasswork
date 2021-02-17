@@ -76,13 +76,7 @@ void AAgent::MoveToLocation()
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Seek(wanderPointer->GetActorLocation()) * SeekStrength * dt);
 	SteeringVelocity += (Seperate() * SeperationStrength * dt);
-
-	Avoid();
-
-	if (bObjectInWay) 
-	{
-		SteeringVelocity += (Avoid() * avoidStrength * dt);
-	}
+	SteeringVelocity += (Avoid(ConeCheck()) * avoidStrength * dt);
 
 	// limit Speed
 	if (SteeringVelocity.Size() > MaxSpeed)
@@ -142,91 +136,35 @@ FVector AAgent::Seperate()
 
 
 // Does the obstacle avoidance behavior
-FVector AAgent::Avoid() 
+FVector AAgent::Avoid(TArray<AActor*> actorToCollideWith)
 {
-	FHitResult hit;
+	FVector finalSteer = FVector(0, 0, 0);
 
-	FCollisionQueryParams CollisionParams;
-
-	TArray<AActor*> result;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
-
-	for (int i = 0; i < result.Num(); i++)
+	for (int i = 0; i < actorToCollideWith.Num(); i++) 
 	{
-		CollisionParams.AddIgnoredActor(result[i]);
-	}
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
-
-	bObjectInWay = false;
-
-	if (hit.bBlockingHit)
-	{
-		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor)) 
+		if (actorToCollideWith[i] != nullptr)
 		{
-			bObjectInWay = true;
-			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
+			FVector direction = actorToCollideWith[i]->GetActorLocation() - GetActorLocation();
+			float distanceMultiplier = direction.Size();
+			direction.Normalize();
+
+			float avoidanceDirectionMultiplier = FVector::DotProduct(direction, GetActorRightVector());
+
+			finalSteer += (-avoidanceDirectionMultiplier) * GetActorRightVector() * (((coneDistance - distanceMultiplier) / coneDistance) * 2);
 		}
 	}
 
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
-
-	if (hit.bBlockingHit)
-	{
-		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
-		{
-			bObjectInWay = true;
-			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
-		}
-	}
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightRaycast->GetForwardVector() * coneDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
-
-	if (hit.bBlockingHit)
-	{
-		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
-		{
-			bObjectInWay = true;
-			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
-		}
-	}
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (rightmostRaycast->GetForwardVector() * endDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
-
-	if (hit.bBlockingHit)
-	{
-		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
-		{
-			bObjectInWay = true;
-			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
-		}
-	}
-
-	GetWorld()->LineTraceSingleByChannel(hit, GetActorLocation(), GetActorLocation() + (leftmostRaycast->GetForwardVector() * endDistance), ECollisionChannel::ECC_Visibility, CollisionParams);
-
-	if (hit.bBlockingHit)
-	{
-		if (!Cast<AAgent>(hit.Actor) && !Cast<AWanderPointer>(hit.Actor))
-		{
-			bObjectInWay = true;
-			return Seek(hit.ImpactPoint + (hit.ImpactNormal * avoidDistance));
-		}
-	}
-
-	return FVector(0, 0, 0);
+	
+	return finalSteer;
 }
 
 
 // Check if any objects are in range for avoidance
-bool AAgent::ConeCheck() 
+TArray<AActor*> AAgent::ConeCheck() 
 {
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + (GetActorForwardVector() * coneDistance), FColor::Green,false,-1.0f,(uint8)'\000',10.0f);
-	//DrawDebugLine(GetWorld(), GetActorLocation(), RotatePointAroundActor(coneThreshold, coneDistance), FColor::Green, false, -1.0f, (uint8)'\000', 10.0f);
-	//DrawDebugLine(GetWorld(), GetActorLocation(), RotatePointAroundActor(coneThreshold, -coneDistance), FColor::Green, false, -1.0f, (uint8)'\000', 10.0f);
-
 	TArray <AActor*> result;
-
+	TArray <AActor*> collidingObjects;
+	collidingObjects.Empty();
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AObstacle::StaticClass(), result);
 
 	FVector distance = FVector(0, 0, 0);
@@ -234,17 +172,17 @@ bool AAgent::ConeCheck()
 	for (int i = 0; i < result.Num(); i++) 
 	{
 		distance = result[i]->GetActorLocation() - GetActorLocation();
-
+		distance.Normalize();
 		if (FVector::DotProduct(distance, GetActorForwardVector()) > UKismetMathLibrary::DegCos(coneThreshold)) 
 		{
 			if (FVector::Distance(result[i]->GetActorLocation(), GetActorLocation()) <= coneDistance) 
 			{
-				return true;
+				collidingObjects.Add(result[i]);
 			}
 		}
 	}
 
-	return false;
+	return collidingObjects;
 }
 
 
