@@ -30,13 +30,13 @@ public:
 	UFUNCTION(BlueprintCallable) void UpdateCollisionScore();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) class AWanderPointer* wanderPointer;
-
-	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
 	UPROPERTY(BlueprintReadOnly) int numOfCollisions = 0;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintReadOnly) FVector SteeringVelocity = FVector(0, 0, 0);
 
 	// Floats
 	UPROPERTY() float dt;
@@ -60,6 +60,8 @@ protected:
 	UFUNCTION() FVector AvoidAgents();
 	UFUNCTION() FVector RotatePointAroundActor(float amountToRotate, float distanceOfPoint);
 	UFUNCTION() TArray<AActor*> ConeCheck();
+	UFUNCTION() FVector Cohesion();
+	UFUNCTION() FVector Align();
 
 	FVector Position = FVector(0, 0, 0);
 
@@ -76,6 +78,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationStrength = 1000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Seperation") float SeperationThreshold = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cohesion") float CohesionStrength = 1000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cohesion") float CohesionThreshold = 300.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Alignment") float AlignmentStrength = 1000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Alignment") float AlignmentThreshold = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneThreshold = 30.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CollisionAvoidance") float coneDistance = 500.0f;

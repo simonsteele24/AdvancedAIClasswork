@@ -76,6 +76,8 @@ void AAgent::MoveToLocation()
 	SteeringVelocity += (SteeringVelocity * DragForce * dt);
 	SteeringVelocity += (Seek(wanderPointer->GetActorLocation()) * SeekStrength * dt);
 	SteeringVelocity += (Seperate() * SeperationStrength * dt);
+	SteeringVelocity += (Seek(Cohesion()) * CohesionStrength * dt);
+	SteeringVelocity += (Align() * CohesionStrength * dt);
 	SteeringVelocity += (Avoid(ConeCheck()) * avoidStrength * dt);
 
 	// limit Speed
@@ -132,6 +134,71 @@ FVector AAgent::Seperate()
 	}
 
 	return steer;
+}
+
+
+
+// Cohesion Steering Behavior
+FVector AAgent::Cohesion() 
+{
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+
+	FVector steer = FVector(0, 0, 0);
+
+	int actorCount = 0;
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		float dist = FVector::Distance(result[i]->GetActorLocation(), GetActorLocation());
+		if (dist < CohesionThreshold && result[i] != this)
+		{
+			steer += result[i]->GetActorLocation();
+			actorCount++;
+		}
+	}
+
+	if (actorCount != 0) 
+	{
+		steer /= actorCount;
+	}
+
+	return steer;
+}
+
+
+// Align Steering Behavior
+FVector AAgent::Align() 
+{
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+
+	FVector steer = FVector(0, 0, 0);
+
+	int actorCount = 0;
+
+	for (int i = 0; i < result.Num(); i++)
+	{
+		float dist = FVector::Distance(result[i]->GetActorLocation(), GetActorLocation());
+		if (dist < AlignmentThreshold && result[i] != this)
+		{
+			AAgent* temp = Cast<AAgent>(result[i]);
+			FVector vel = temp->SteeringVelocity;
+			vel.Normalize();
+			steer += vel;
+			actorCount++;
+		}
+	}
+
+	if (actorCount != 0)
+	{
+		steer /= actorCount;
+		FVector desired = steer * 500;
+		FVector force = desired - SteeringVelocity;
+		return force;
+	}
+
+	return FVector(0.0f,0.0f,0.0f);
 }
 
 
