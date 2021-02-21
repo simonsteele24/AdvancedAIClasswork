@@ -193,7 +193,7 @@ FVector AAgent::Align()
 	if (actorCount != 0)
 	{
 		steer /= actorCount;
-		FVector desired = steer * 500;
+		FVector desired = steer * MAX_SPEED;
 		FVector force = desired - SteeringVelocity;
 		return force;
 	}
