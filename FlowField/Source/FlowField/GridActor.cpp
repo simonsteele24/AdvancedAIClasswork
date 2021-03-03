@@ -2,6 +2,8 @@
 
 
 #include "GridActor.h"
+#include "Wall.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AGridActor::AGridActor()
@@ -25,19 +27,37 @@ void AGridActor::Tick(float DeltaTime)
 
 }
 
-// Generates the overal grid, will be called in begin play
+// Initializes all fields, will be called in begin play
 void AGridActor::GenerateGrid() 
 {
-	gridVals.Empty(); // Empties out all grid vals
+	costField.Empty(); // Empties out cost field
 
 
-	// Initialize grid based on grid size
+	// Initialize all fields based on grid size
 	for (int x = 0; x < gridSize.X; x++) 
 	{
 		for (int y = 0; y < gridSize.Y; y++) 
 		{
-			gridVals.Add(TTuple<FVector2D, int>(FVector2D(x, y), 999));
+			costField.Add(TTuple<FVector2D, int>(FVector2D(x, y), 1)); // Initialize Cost field
 		}
+	}
+}
+
+// Generates the cost field based on where walls are, will be called in tick
+void AGridActor::GenerateCostField() 
+{
+	TArray<AActor*> results; // Represents results from get all actors search
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWall::StaticClass(), results); // Get all walls
+
+	// Iterate through walls
+	for (int i = 0; i < results.Num(); i++) 
+	{
+		// Get wall grid position
+		AWall* wallActor = Cast<AWall>(results[i]);
+		FVector2D pos = wallActor->GetGridPosition();
+
+		costField.Remove(pos); // Remove old cost from cost field
+		costField.Add(TTuple<FVector2D, int>(pos, 255)); // Add new cost to cost field based on wall
 	}
 }
 
