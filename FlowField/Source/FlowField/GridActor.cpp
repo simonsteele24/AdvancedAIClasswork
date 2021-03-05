@@ -34,11 +34,15 @@ void AGridActor::GenerateGrid()
 
 
 	// Initialize all fields based on grid size
-	for (int x = 0; x < gridSize.X; x++) 
+	for (int x = 0; x < gridSize.x; x++) 
 	{
-		for (int y = 0; y < gridSize.Y; y++) 
+		for (int y = 0; y < gridSize.y; y++) 
 		{
-			costField.Add(TTuple<FVector2D, int>(FVector2D(x, y), 1)); // Initialize Cost field
+			FCostKey newKey;
+			FIntVector2D position;
+
+			costField.Add(FCostKey(FIntVector2D(x, y), 1)); // Initialize Cost field
+			integrationField.Add(FCostKey(FIntVector2D(x, y), 6558));
 		}
 	}
 }
@@ -55,9 +59,6 @@ void AGridActor::GenerateCostField()
 		// Get wall grid position
 		AWall* wallActor = Cast<AWall>(results[i]);
 		FVector2D pos = wallActor->GetGridPosition();
-
-		costField.Remove(pos); // Remove old cost from cost field
-		costField.Add(TTuple<FVector2D, int>(pos, 255)); // Add new cost to cost field based on wall
 	}
 }
 
@@ -70,12 +71,71 @@ void AGridActor::DisplayGrid()
 
 
 	// Spawn actors on grid based on grid size and distance between each cell
-	for (int x = 0; x < gridSize.X; x++) 
+	for (int x = 0; x < gridSize.x; x++) 
 	{
-		for (int y = 0; y < gridSize.Y; y++) 
+		for (int y = 0; y < gridSize.y; y++) 
 		{
 			location = FVector(x * distanceBetweenCells, y * distanceBetweenCells, 100); // Update position based on grid position
 			GetWorld()->SpawnActor<AActor>(gridRepresentation, location, rotation, spawnParams); // Spawn actor
 		}
 	}
+}
+
+// Generates the integration field based on goal
+void AGridActor::GenerateIntegrationField() 
+{
+	TArray<FCostKey> openList;
+	openList.Empty();
+
+	openList.Add(FCostKey(goalLocation,0));
+
+	while (openList.Num() != 0)
+	{
+		FCostKey currentNode = openList.Pop();
+		TArray<FIntVector2D> neighbors = GetNeighbors(currentNode.pos);
+
+		for (int i = 0; i < neighbors.Num(); i++) 
+		{
+		}
+	}
+}
+
+// Gets all neighbors based on position
+TArray<FIntVector2D> AGridActor::GetNeighbors(FIntVector2D position) 
+{
+	TArray<FIntVector2D> neighbors;
+	neighbors.Empty();
+
+	if (position.x > 0) 
+	{
+		neighbors.Add(FIntVector2D(position.x - 1, position.y));
+	}
+	if (position.x < gridSize.x - 1) 
+	{
+		neighbors.Add(FIntVector2D(position.x + 1, position.y));
+	}
+	if (position.y > 0)
+	{
+		neighbors.Add(FIntVector2D(position.x, position.y - 1));
+	}
+	if (position.x < gridSize.y - 1)
+	{
+		neighbors.Add(FIntVector2D(position.x, position.y + 1));
+	}
+
+	return neighbors;
+}
+
+// Get the current cost at a given position in the integration field
+int AGridActor::GetIntegrationCostAtPosition(FIntVector2D position) 
+{
+	for (int i = 0; i < integrationField.Num(); i++) 
+	{
+		if (integrationField[i].pos.Equals(position)) 
+		{
+			return integrationField[i].cost;
+		}
+	}
+
+	return 0;
 }
