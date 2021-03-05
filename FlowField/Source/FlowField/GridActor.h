@@ -60,7 +60,7 @@ public:
 	UFUNCTION(BlueprintCallable) void DisplayGrid();
 	UFUNCTION(BlueprintCallable) void GenerateCostField();
 	UFUNCTION(BlueprintCallable) void GenerateIntegrationField();
-
+	UFUNCTION(BlueprintCallable) int GetIntegrationCostAtPosition(FIntVector2D position);
 
 	/* Public Vars */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D gridSize; // The overal size of the grid (i.e 5x5 grid)
@@ -74,7 +74,7 @@ protected:
 
 	/* Private Functions */
 	UFUNCTION() TArray<FIntVector2D> GetNeighbors(FIntVector2D position);
-	UFUNCTION() int GetIntegrationCostAtPosition(FIntVector2D position);
+	UFUNCTION() int GetIntegrationKey(FIntVector2D position);
 
 	/* Private vars */
 	UPROPERTY() TArray<FCostKey> costField; // A map to represent all obstacle values on the grid

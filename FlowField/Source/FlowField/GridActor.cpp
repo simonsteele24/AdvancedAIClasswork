@@ -59,6 +59,7 @@ void AGridActor::GenerateCostField()
 		// Get wall grid position
 		AWall* wallActor = Cast<AWall>(results[i]);
 		FVector2D pos = wallActor->GetGridPosition();
+		integrationField[GetIntegrationKey(FIntVector2D(pos.X, pos.Y))].cost = 255;
 	}
 }
 
@@ -92,10 +93,18 @@ void AGridActor::GenerateIntegrationField()
 	while (openList.Num() != 0)
 	{
 		FCostKey currentNode = openList.Pop();
+
+		integrationField[GetIntegrationKey(currentNode.pos)].cost = currentNode.cost;
+
 		TArray<FIntVector2D> neighbors = GetNeighbors(currentNode.pos);
 
 		for (int i = 0; i < neighbors.Num(); i++) 
 		{
+			if (currentNode.cost < GetIntegrationCostAtPosition(neighbors[i]) && GetIntegrationCostAtPosition(neighbors[i]) != 255)
+			{
+				FCostKey newKey = FCostKey(neighbors[i], currentNode.cost + 1);
+				openList.Insert(newKey, 0);
+			}
 		}
 	}
 }
@@ -134,6 +143,20 @@ int AGridActor::GetIntegrationCostAtPosition(FIntVector2D position)
 		if (integrationField[i].pos.Equals(position)) 
 		{
 			return integrationField[i].cost;
+		}
+	}
+
+	return 0;
+}
+
+// Gets the current node's index at a given position in the integration field
+int AGridActor::GetIntegrationKey(FIntVector2D position) 
+{
+	for (int i = 0; i < integrationField.Num(); i++)
+	{
+		if (integrationField[i].pos.Equals(position))
+		{
+			return i;
 		}
 	}
 
