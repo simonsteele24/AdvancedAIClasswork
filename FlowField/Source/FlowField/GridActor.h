@@ -41,6 +41,20 @@ struct FCostKey
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int cost;
 };
 
+USTRUCT(immutable, noexport, BlueprintType)
+struct FFlowKey
+{
+	FFlowKey() {}
+
+	FFlowKey(FIntVector2D _pos, FVector2D _direction)
+	{
+		pos = _pos;
+		direction = _direction;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D pos;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FVector2D direction;
+};
 
 
 UCLASS()
@@ -60,7 +74,10 @@ public:
 	UFUNCTION(BlueprintCallable) void DisplayGrid();
 	UFUNCTION(BlueprintCallable) void GenerateCostField();
 	UFUNCTION(BlueprintCallable) void GenerateIntegrationField();
+	UFUNCTION(BlueprintCallable) void GenerateFlowField();
 	UFUNCTION(BlueprintCallable) int GetIntegrationCostAtPosition(FIntVector2D position);
+	UFUNCTION(BlueprintCallable) FVector2D GetVectorAtPosition(FIntVector2D position);
+	UFUNCTION(BlueprintCallable) void ResetFields();
 
 	/* Public Vars */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D gridSize; // The overal size of the grid (i.e 5x5 grid)
@@ -79,4 +96,5 @@ protected:
 	/* Private vars */
 	UPROPERTY() TArray<FCostKey> costField; // A map to represent all obstacle values on the grid
 	UPROPERTY() TArray<FCostKey> integrationField; // A map to represent all cost values on the grid
+	UPROPERTY() TArray<FFlowKey> flowField; // A map to represent all flow values on the grid
 };
