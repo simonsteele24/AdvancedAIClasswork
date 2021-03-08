@@ -83,7 +83,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D gridSize; // The overal size of the grid (i.e 5x5 grid)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float distanceBetweenCells; // The distance between each node (100 between [0,0] and [0,1])
 	UPROPERTY(EditAnywhere) TSubclassOf<AActor> gridRepresentation; // A node to represent where a cell is
-	UPROPERTY(EditAnywhere) FIntVector2D goalLocation; // Grid location of goal
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D goalLocation; // Grid location of goal
 
 protected:
 	// Called when the game starts or when spawned
