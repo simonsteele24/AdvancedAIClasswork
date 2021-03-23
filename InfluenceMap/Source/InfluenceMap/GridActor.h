@@ -60,6 +60,7 @@ public:
 	UFUNCTION(BlueprintCallable) void GenerateCostField();
 	UFUNCTION(BlueprintCallable) void ResetFields();
 	UFUNCTION(BlueprintCallable) float GetCostAtLocation(FIntVector2D pos);
+	UFUNCTION(BlueprintCallable) int GetDistanceBetweenTwoPositions(FIntVector2D a, FIntVector2D b);
 
 	/* Public Vars */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D gridSize; // The overal size of the grid (i.e 5x5 grid)
@@ -72,4 +73,7 @@ protected:
 
 	/* Private vars */
 	UPROPERTY() TArray<FCostKey> costField; // A map to represent all obstacle values on the grid
+
+	/* Private Functions */
+	UFUNCTION() float CalculateInfluence(float MinDist, float MaxDist, float MaxVal, float Distance);
 };

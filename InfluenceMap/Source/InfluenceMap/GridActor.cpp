@@ -2,6 +2,7 @@
 
 
 #include "GridActor.h"
+#include "Tower.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -48,6 +49,21 @@ void AGridActor::GenerateGrid()
 // Generates the cost field based on where walls are, will be called in tick
 void AGridActor::GenerateCostField()
 {
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATower::StaticClass(), result);
+
+	for (int i = 0; i < costField.Num(); i++) 
+	{
+		for (int j = 0; j < result.Num(); j++) 
+		{
+			ATower* tower = Cast<ATower>(result[j]);
+
+			float dist = GetDistanceBetweenTwoPositions(costField[i].pos, tower->position);
+			float influence = CalculateInfluence(tower->MinDistance, tower->MaxDistance, tower->MaxValue,
+				dist);
+			costField[i].cost = influence;
+		}
+	}
 }
 
 // Displays out entire grid using actors
@@ -89,4 +105,33 @@ float AGridActor::GetCostAtLocation(FIntVector2D pos)
 void AGridActor::ResetFields()
 {
 	GenerateGrid();
+}
+
+// Gets the non-diagonal distance between 2 grid nodes
+int AGridActor::GetDistanceBetweenTwoPositions(FIntVector2D a, FIntVector2D b)
+{
+	// Get the differences between x and y
+	int diffOfX = std::abs(b.x - a.x);
+
+	int diffOfY = std::abs(b.y - a.y);
+
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Sum:"));
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::FromInt(diffOfX + diffOfY));
+
+	int result = diffOfX + diffOfY;
+
+	return result; // Return sum of the 2 differences
+}
+
+// Calculates the influence based on tower vals
+float AGridActor::CalculateInfluence(float MinDist, float MaxDist, float MaxVal, float Distance) 
+{
+
+	// return 0 if distance is out of range
+	if (Distance > MaxDist && Distance != MaxDist) 
+	{
+		return 0.0f;
+	}
+
+	return MaxVal - (MaxVal * (Distance / MaxDist));
 }
