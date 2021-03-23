@@ -61,7 +61,7 @@ void AGridActor::GenerateCostField()
 			float dist = GetDistanceBetweenTwoPositions(costField[i].pos, tower->position);
 			float influence = CalculateInfluence(tower->MinDistance, tower->MaxDistance, tower->MaxValue,
 				dist);
-			costField[i].cost = influence;
+			costField[i].cost += influence;
 		}
 	}
 }
@@ -112,11 +112,7 @@ int AGridActor::GetDistanceBetweenTwoPositions(FIntVector2D a, FIntVector2D b)
 {
 	// Get the differences between x and y
 	int diffOfX = std::abs(b.x - a.x);
-
 	int diffOfY = std::abs(b.y - a.y);
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Sum:"));
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::FromInt(diffOfX + diffOfY));
 
 	int result = diffOfX + diffOfY;
 
@@ -128,10 +124,10 @@ float AGridActor::CalculateInfluence(float MinDist, float MaxDist, float MaxVal,
 {
 
 	// return 0 if distance is out of range
-	if (Distance > MaxDist && Distance != MaxDist) 
+	if ((Distance > MaxDist && Distance != MaxDist) ||(Distance < MinDist && Distance != MinDist)) 
 	{
 		return 0.0f;
 	}
 
-	return MaxVal - (MaxVal * (Distance / MaxDist));
+	return MaxVal - (MaxVal * ((Distance - MinDist) / (MaxDist - MinDist)));
 }
