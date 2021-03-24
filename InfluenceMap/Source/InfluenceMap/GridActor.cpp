@@ -3,6 +3,7 @@
 
 #include "GridActor.h"
 #include "Tower.h"
+#include "MobileTower.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -31,7 +32,7 @@ void AGridActor::Tick(float DeltaTime)
 void AGridActor::GenerateGrid()
 {
 	costField.Empty(); // Empties out cost field
-
+	mobileCostField.Empty(); // Empties out mobile cost field
 
 	// Initialize all fields based on grid size
 	for (int x = 0; x < gridSize.x; x++)
@@ -42,6 +43,7 @@ void AGridActor::GenerateGrid()
 			FIntVector2D position;
 
 			costField.Add(FCostKey(FIntVector2D(x, y), 0.0f)); // Initialize Cost field
+			mobileCostField.Add(FCostKey(FIntVector2D(x, y), 0.0f)); // Initialize Mobile Cost Field
 		}
 	}
 }
@@ -56,12 +58,14 @@ void AGridActor::GenerateCostField()
 	{
 		for (int j = 0; j < result.Num(); j++) 
 		{
-			ATower* tower = Cast<ATower>(result[j]);
-
-			float dist = GetDistanceBetweenTwoPositions(costField[i].pos, tower->position);
-			float influence = CalculateInfluence(tower->MinDistance, tower->MaxDistance, tower->MaxValue,
-				dist);
-			costField[i].cost += influence;
+			if (Cast<AMobileTower>(result[j]) == nullptr) 
+			{
+				ATower* tower = Cast<ATower>(result[j]);
+				float dist = GetDistanceBetweenTwoPositions(costField[i].pos, tower->position);
+				float influence = CalculateInfluence(tower->MinDistance, tower->MaxDistance, tower->MaxValue,
+					dist);
+				costField[i].cost += influence;
+			}
 		}
 	}
 }
@@ -94,7 +98,7 @@ float AGridActor::GetCostAtLocation(FIntVector2D pos)
 		// Find if given position is equal to this position
 		if (costField[i].pos.Equals(pos))
 		{
-			return costField[i].cost; // Return cost if positions match up
+			return costField[i].cost + mobileCostField[i].cost; // Return cost if positions match up
 		}
 	}
 
@@ -130,4 +134,122 @@ float AGridActor::CalculateInfluence(float MinDist, float MaxDist, float MaxVal,
 	}
 
 	return MaxVal - (MaxVal * ((Distance - MinDist) / (MaxDist - MinDist)));
+}
+
+// Generates the cost field based on the mobile towers in game
+void AGridActor::GenerateMobileCostField() 
+{
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMobileTower::StaticClass(), result);
+
+	openList.Empty();
+	closedList.Empty();
+
+	for (int i = 0; i < mobileCostField.Num(); i++) 
+	{
+		mobileCostField[i].cost = 0;
+	}
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		AMobileTower* tower = Cast<AMobileTower>(result[i]);
+
+		openList.Add(tower->position);
+
+		while (openList.Num() != 0)
+		{
+			FIntVector2D newPos = openList.Pop();
+			GenerateMobileCostHere(newPos, tower);
+			closedList.Add(newPos);
+			openList.Append(FindNearestNeighbors(newPos, tower));
+		}
+	}
+}
+
+// Generates the based on where the mobile actor is
+void AGridActor::GenerateMobileCostHere(FIntVector2D Pos, class AMobileTower * tower)
+{
+	float dist = GetDistanceBetweenTwoPositions(Pos, tower->position);
+	float influence = CalculateInfluence(tower->MinDistance, tower->MaxDistance, tower->MaxValue,
+		dist);
+	
+	if ((influence > tower->MaxValue && influence != tower->MaxValue) || (influence < 0 && influence != 0)) 
+	{
+		return;
+	}
+
+	for (int i = 0; i < mobileCostField.Num(); i++) 
+	{
+		if (mobileCostField[i].pos.Equals(Pos)) 
+		{
+			mobileCostField[i].cost = influence;
+		}
+	}
+}
+
+// Finds the nearest neighbors relative to the mobile tower being checked
+TArray<FIntVector2D> AGridActor::FindNearestNeighbors(FIntVector2D Pos, class AMobileTower * tower)
+{
+	TArray<FIntVector2D> neigbors;
+	neigbors.Empty();
+
+	if (Pos.x != 0) 
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x - 1, Pos.y))) 
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x -1, Pos.y), tower->position) <= tower->MaxDistance)
+			{
+				neigbors.Add(FIntVector2D(Pos.x - 1, Pos.y));
+			}
+		}
+	}
+
+	if (Pos.y != 0)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x, Pos.y - 1 )))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x, Pos.y - 1), tower->position) <= tower->MaxDistance)
+			{
+				neigbors.Add(FIntVector2D(Pos.x, Pos.y - 1));
+			}
+		}
+	}
+
+	if (Pos.y != gridSize.y - 1)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x, Pos.y + 1)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x, Pos.y + 1), tower->position) <= tower->MaxDistance)
+			{
+				neigbors.Add(FIntVector2D(Pos.x, Pos.y + 1));
+			}
+		}
+	}
+
+	if (Pos.x != gridSize.x - 1)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x + 1, Pos.y)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x + 1, Pos.y), tower->position) <= tower->MaxDistance)
+			{
+				neigbors.Add(FIntVector2D(Pos.x + 1, Pos.y));
+			}
+		}
+	}
+
+	return neigbors;
+}
+
+// Checks if a given position if in the open list
+bool AGridActor::ClosedListContains(FIntVector2D Pos) 
+{
+	for (int i = 0; i < closedList.Num(); i++) 
+	{
+		if (closedList[i] == Pos) 
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
