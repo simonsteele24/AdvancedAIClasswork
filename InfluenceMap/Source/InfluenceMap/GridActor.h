@@ -65,7 +65,9 @@ public:
 	UFUNCTION(BlueprintCallable) void GenerateCostField();
 	UFUNCTION(BlueprintCallable) void GenerateMobileCostField();
 	UFUNCTION(BlueprintCallable) void ResetFields();
+	UFUNCTION(BlueprintCallable) void GenerateHeatMap();
 	UFUNCTION(BlueprintCallable) float GetCostAtLocation(FIntVector2D pos);
+	UFUNCTION(BlueprintCallable) float GetHeatAtLocation(FIntVector2D pos);
 	UFUNCTION(BlueprintCallable) int GetDistanceBetweenTwoPositions(FIntVector2D a, FIntVector2D b);
 
 	/* Public Vars */
@@ -80,12 +82,15 @@ protected:
 	/* Private vars */
 	UPROPERTY() TArray<FCostKey> costField; // A map to represent all obstacle values on the grid
 	UPROPERTY() TArray<FCostKey> mobileCostField; // A map to represent all mobile towers cost on the grid
+	UPROPERTY() TArray<FCostKey> heatMap; // A map to represent all towers and enemies in game
 	UPROPERTY() TArray<FIntVector2D> openList; // An array to represent an open list of all positions checked
 	UPROPERTY() TArray<FIntVector2D> closedList; // An array to represent a closed list of all positions checked
 
 	/* Private Functions */
 	UFUNCTION() float CalculateInfluence(float MinDist, float MaxDist, float MaxVal, float Distance);
 	UFUNCTION() void GenerateMobileCostHere(FIntVector2D Pos, class AMobileTower * tower);
+	UFUNCTION() void GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal);
 	UFUNCTION() TArray<FIntVector2D> FindNearestNeighbors(FIntVector2D Pos, class AMobileTower* tower);
+	UFUNCTION() TArray<FIntVector2D> FindNearestNeighborsHeat(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxPresence);
 	UFUNCTION() bool ClosedListContains(FIntVector2D Pos);
 };

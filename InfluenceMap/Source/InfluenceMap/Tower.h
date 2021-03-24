@@ -33,7 +33,9 @@ public:
 	/* Public Vars */
 	UPROPERTY(EditAnywhere) int MinDistance; // Represents minimum distance for tower to fire
 	UPROPERTY(EditAnywhere) int MaxDistance; // Represents maximum distance that tower can fire on
+	UPROPERTY(EditAnywhere) int MaxHeatDistance; // Represents maximum distance that a tower can have heat presence on
 	UPROPERTY(EditAnywhere) float MaxValue; // Represents the maximum value a tile can be from a tower
+	UPROPERTY(EditAnywhere) float MaxHeatPresence; // Represents the maximum value a heat presence can have
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float Damage; // Represents the Damage the tower can do
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FIntVector2D position;
 

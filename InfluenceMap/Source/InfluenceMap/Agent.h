@@ -45,6 +45,9 @@ public:
 
 	UPROPERTY(EditAnywhere) float AgentSpeed; // The overal speed of the agent
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float health; // The health of the agent 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float health; // The health of the agent
+
+	UPROPERTY(EditAnywhere) float EnemyPresenceRadius; // Represents the radius of the agent's presence
+	UPROPERTY(EditAnywhere) float EnemyPresenceMaxValue; // Represents the maximum value of the presence
 
 };

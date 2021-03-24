@@ -33,6 +33,7 @@ void AGridActor::GenerateGrid()
 {
 	costField.Empty(); // Empties out cost field
 	mobileCostField.Empty(); // Empties out mobile cost field
+	heatMap.Empty(); // Empties out the heat map
 
 	// Initialize all fields based on grid size
 	for (int x = 0; x < gridSize.x; x++)
@@ -44,6 +45,7 @@ void AGridActor::GenerateGrid()
 
 			costField.Add(FCostKey(FIntVector2D(x, y), 0.0f)); // Initialize Cost field
 			mobileCostField.Add(FCostKey(FIntVector2D(x, y), 0.0f)); // Initialize Mobile Cost Field
+			heatMap.Add(FCostKey(FIntVector2D(x, y), 0.0f)); // Initialize Heat Map
 		}
 	}
 }
@@ -99,6 +101,22 @@ float AGridActor::GetCostAtLocation(FIntVector2D pos)
 		if (costField[i].pos.Equals(pos))
 		{
 			return costField[i].cost + mobileCostField[i].cost; // Return cost if positions match up
+		}
+	}
+
+	return 0; // Return a cost of 0 if nothing is found
+}
+
+
+float AGridActor::GetHeatAtLocation(FIntVector2D pos) 
+{
+	// Go through entire cost field
+	for (int i = 0; i < costField.Num(); i++)
+	{
+		// Find if given position is equal to this position
+		if (costField[i].pos.Equals(pos))
+		{
+			return heatMap[i].cost; // Return cost if positions match up
 		}
 	}
 
@@ -240,6 +258,59 @@ TArray<FIntVector2D> AGridActor::FindNearestNeighbors(FIntVector2D Pos, class AM
 	return neigbors;
 }
 
+
+TArray<FIntVector2D> AGridActor::FindNearestNeighborsHeat(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxPresence) 
+{
+	TArray<FIntVector2D> neigbors;
+	neigbors.Empty();
+
+	if (Pos.x != 0)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x - 1, Pos.y)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x - 1, Pos.y), EnemyPos) <= MaxPresence)
+			{
+				neigbors.Add(FIntVector2D(Pos.x - 1, Pos.y));
+			}
+		}
+	}
+
+	if (Pos.y != 0)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x, Pos.y - 1)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x, Pos.y - 1), EnemyPos) <= MaxPresence)
+			{
+				neigbors.Add(FIntVector2D(Pos.x, Pos.y - 1));
+			}
+		}
+	}
+
+	if (Pos.y != gridSize.y - 1)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x, Pos.y + 1)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x, Pos.y + 1), EnemyPos) <= MaxPresence)
+			{
+				neigbors.Add(FIntVector2D(Pos.x, Pos.y + 1));
+			}
+		}
+	}
+
+	if (Pos.x != gridSize.x - 1)
+	{
+		if (!ClosedListContains(FIntVector2D(Pos.x + 1, Pos.y)))
+		{
+			if (GetDistanceBetweenTwoPositions(FIntVector2D(Pos.x + 1, Pos.y), EnemyPos) <= MaxPresence)
+			{
+				neigbors.Add(FIntVector2D(Pos.x + 1, Pos.y));
+			}
+		}
+	}
+
+	return neigbors;
+}
+
 // Checks if a given position if in the open list
 bool AGridActor::ClosedListContains(FIntVector2D Pos) 
 {
@@ -252,4 +323,64 @@ bool AGridActor::ClosedListContains(FIntVector2D Pos)
 	}
 
 	return false;
+}
+
+// Generates the heatmap for the whole map
+void AGridActor::GenerateHeatMap()
+{
+	for (int i = 0; i < heatMap.Num(); i++) 
+	{
+		heatMap[i].cost = 0;
+	}
+
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATower::StaticClass(), result);
+
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		if (Cast<AMobileTower>(result[i]) == nullptr)
+		{
+			ATower* tower = Cast<ATower>(result[i]);
+			openList.Empty();
+			closedList.Empty();
+
+			openList.Add(tower->position);
+			while (openList.Num() != 0) 
+			{
+				FIntVector2D newPos = openList.Pop();
+				GenerateHeatCostHere(newPos, tower->position, tower->MaxHeatDistance, tower->MaxHeatPresence);
+				closedList.Add(newPos);
+				openList.Append(FindNearestNeighborsHeat(newPos, tower->position,tower->MaxHeatDistance));
+			}
+		}
+		else 
+		{
+			AMobileTower* tower = Cast<AMobileTower>(result[i]);
+			openList.Empty();
+			closedList.Empty();
+
+			openList.Add(tower->position);
+			while (openList.Num() != 0)
+			{
+				FIntVector2D newPos = openList.Pop();
+				GenerateHeatCostHere(newPos, tower->position, tower->MaxHeatDistance, tower->MaxHeatPresence);
+				closedList.Add(newPos);
+				openList.Append(FindNearestNeighborsHeat(newPos, tower->position, tower->MaxHeatDistance));
+			}
+		}
+	}
+}
+
+// Generates the heat map cost at location
+void AGridActor::GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal) 
+{
+	float dist = GetDistanceBetweenTwoPositions(Pos, EnemyPos);
+
+	for (int i = 0; i < heatMap.Num(); i++)
+	{
+		if (heatMap[i].pos.Equals(Pos))
+		{
+			heatMap[i].cost += MaxVal - (MaxVal * (dist / MaxDist));
+		}
+	}
 }
