@@ -45,6 +45,12 @@ bool AAgent::CheckIfLocationNeedsToBeUpdated()
 	float distance = FVector::Dist(TargetLocation, GetActorLocation());
 
 	// Return if it is within range and that it isn't the last point on the path
+
+	if (distance <= DistanceBeforeSwitch && TargetIndex == SplineComponent->GetNumberOfSplinePoints() - 1)
+	{
+		Destroy();
+	}
+
 	return distance <= DistanceBeforeSwitch && TargetIndex != SplineComponent->GetNumberOfSplinePoints() - 1;
 }
 
