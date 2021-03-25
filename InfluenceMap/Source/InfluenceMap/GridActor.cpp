@@ -4,6 +4,7 @@
 #include "GridActor.h"
 #include "Tower.h"
 #include "MobileTower.h"
+#include "Agent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -369,10 +370,29 @@ void AGridActor::GenerateHeatMap()
 			}
 		}
 	}
+
+	result.Empty();
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAgent::StaticClass(), result);
+	for (int i = 0; i < result.Num(); i++) 
+	{
+		AAgent* agent = Cast<AAgent>(result[i]);
+		openList.Empty();
+		closedList.Empty();
+
+		openList.Add(agent->position);
+		while (openList.Num() != 0)
+		{
+			FIntVector2D newPos = openList.Pop();
+			GenerateHeatCostHere(newPos, agent->position, agent->EnemyPresenceRadius, agent->EnemyPresenceMaxValue, true);
+			closedList.Add(newPos);
+			openList.Append(FindNearestNeighborsHeat(newPos, agent->position, agent->EnemyPresenceMaxValue));
+		}
+
+	}
 }
 
 // Generates the heat map cost at location
-void AGridActor::GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal) 
+void AGridActor::GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal, bool IsEnemy)
 {
 	float dist = GetDistanceBetweenTwoPositions(Pos, EnemyPos);
 
@@ -380,7 +400,14 @@ void AGridActor::GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, f
 	{
 		if (heatMap[i].pos.Equals(Pos))
 		{
-			heatMap[i].cost += MaxVal - (MaxVal * (dist / MaxDist));
+			if (IsEnemy) 
+			{
+				heatMap[i].cost -= MaxVal - (MaxVal * (dist / MaxDist));
+			}
+			else
+			{
+				heatMap[i].cost += MaxVal - (MaxVal * (dist / MaxDist));
+			}
 		}
 	}
 }

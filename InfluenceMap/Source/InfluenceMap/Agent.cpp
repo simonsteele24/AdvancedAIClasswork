@@ -3,6 +3,7 @@
 
 #include "Agent.h"
 #include "GridActor.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AAgent::AAgent()
@@ -59,17 +60,30 @@ void AAgent::MoveTowardLocation()
 }
 
 // Applys damage to the enemy based on the influence map and damage type
-void AAgent::ApplyDamage(float damageNum) 
+void AAgent::ApplyDamage() 
 {
 	// Get grid position
 	FIntVector2D pos = FIntVector2D(FMath::RoundToInt(GetActorLocation().X / GridActor->distanceBetweenCells), FMath::RoundToInt(GetActorLocation().Y / GridActor->distanceBetweenCells));
 
 	// Subtract health by damage
-	health -= damageNum * GridActor->GetCostAtLocation(pos);
+	health -= GridActor->GetCostAtLocation(pos);
 }
 
 // Checks if health is low enough to kill it off
 bool AAgent::CheckIfAgentNeedsToBeDestroyed() 
 {
 	return health <= 0.0f;
+}
+
+// Updates grid position based on agent's location
+void AAgent::UpdateGridLocation() 
+{
+	TArray<AActor*> result;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGridActor::StaticClass(), result);
+	AGridActor* Grid = Cast<AGridActor>(result[0]);
+
+	if (Grid != nullptr) 
+	{
+		position = FIntVector2D(FMath::RoundToInt(GetActorLocation().X / Grid->distanceBetweenCells), FMath::RoundToInt(GetActorLocation().Y / Grid->distanceBetweenCells));
+	}
 }

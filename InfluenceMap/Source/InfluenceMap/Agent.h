@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GridActor.h"
 #include "Agent.generated.h"
 
 UCLASS()
@@ -20,7 +21,8 @@ public:
 	UFUNCTION(BlueprintCallable) void UpdateToNextLocation();
 	UFUNCTION(BlueprintCallable) bool CheckIfLocationNeedsToBeUpdated();
 	UFUNCTION(BlueprintCallable) void MoveTowardLocation();
-	UFUNCTION(BlueprintCallable) void ApplyDamage(float damageNum);
+	UFUNCTION(BlueprintCallable) void UpdateGridLocation();
+	UFUNCTION(BlueprintCallable) void ApplyDamage();
 	UFUNCTION(BlueprintCallable) bool CheckIfAgentNeedsToBeDestroyed();
 
 protected:
@@ -49,5 +51,5 @@ public:
 
 	UPROPERTY(EditAnywhere) float EnemyPresenceRadius; // Represents the radius of the agent's presence
 	UPROPERTY(EditAnywhere) float EnemyPresenceMaxValue; // Represents the maximum value of the presence
-
+	UPROPERTY() FIntVector2D position;
 };

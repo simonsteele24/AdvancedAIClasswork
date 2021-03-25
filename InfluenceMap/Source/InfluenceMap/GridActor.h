@@ -89,7 +89,7 @@ protected:
 	/* Private Functions */
 	UFUNCTION() float CalculateInfluence(float MinDist, float MaxDist, float MaxVal, float Distance);
 	UFUNCTION() void GenerateMobileCostHere(FIntVector2D Pos, class AMobileTower * tower);
-	UFUNCTION() void GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal);
+	UFUNCTION() void GenerateHeatCostHere(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxDist, float MaxVal, bool IsEnemy = false);
 	UFUNCTION() TArray<FIntVector2D> FindNearestNeighbors(FIntVector2D Pos, class AMobileTower* tower);
 	UFUNCTION() TArray<FIntVector2D> FindNearestNeighborsHeat(FIntVector2D Pos, FIntVector2D EnemyPos, float MaxPresence);
 	UFUNCTION() bool ClosedListContains(FIntVector2D Pos);
